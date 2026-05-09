@@ -1,0 +1,134 @@
+site_name: bravo-code-sdd-g
+site_description: AI-Native Spec-Driven Development framework for Claude Code
+site_author: Regis Renzi
+site_url: https://Regis-BR.github.io/bravo-code-sdd-g/
+repo_url: https://github.com/Regis-BR/bravo-code-sdd-g
+repo_name: Regis-BR/bravo-code-sdd-g
+edit_uri: edit/main/
+
+# =============================================================================
+# Tema Material com features que ajudam navegação de KB grande
+# =============================================================================
+theme:
+  name: material
+  language: pt
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: pink
+      toggle:
+        icon: material/brightness-7
+        name: Tema escuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: pink
+      toggle:
+        icon: material/brightness-4
+        name: Tema claro
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+# =============================================================================
+# Plugins
+# =============================================================================
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - tags
+
+# =============================================================================
+# Markdown extensions
+# =============================================================================
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 4
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# =============================================================================
+# Navegação principal
+# =============================================================================
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Setup: SETUP.md
+      - GitHub Integration: GITHUB_INTEGRATION.md
+      - Roadmap: ROADMAP.md
+  - Knowledge Base:
+      - Visão geral: kb/index.md
+      - GCP: kb/gcp.md
+      - Terraform: kb/terraform.md
+      - Terragrunt: kb/terragrunt.md
+      - Gemini: kb/gemini.md
+      - OpenRouter: kb/openrouter.md
+      - Pydantic: kb/pydantic.md
+      - Langfuse: kb/langfuse.md
+      - CrewAI: kb/crewai.md
+  - SDD Framework:
+      - Workflow: sdd/workflow.md
+      - Agents: sdd/agents.md
+      - Commands: sdd/commands.md
+
+# =============================================================================
+# Extras
+# =============================================================================
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Regis-BR
+    - icon: fontawesome/solid/envelope
+      link: mailto:regis@rnztech.com
+  generator: false  # remove "Made with Material for MkDocs"
+
+copyright: |
+  Copyright &copy; 2026 Regis Renzi (RNZ Tech Ltda) —
+  <a href="https://github.com/Regis-BR/bravo-code-sdd-g/blob/main/LICENSE-NOTICE.md">License Notice</a>

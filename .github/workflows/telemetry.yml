@@ -1,0 +1,109 @@
+name: Telemetry
+
+# =============================================================================
+# Roda diariamente (06:00 UTC) e em manual dispatch.
+# Coleta métricas do framework e publica como Actions Summary:
+# - Total de Issues por phase
+# - Issues criadas/fechadas no período
+# - PRs mergeados
+# - Agents mais usados (extraído de DESIGN.md e BUILD_REPORT.md)
+# - KB drift status
+# =============================================================================
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # 06:00 UTC todo dia
+  workflow_dispatch:
+    inputs:
+      since-days:
+        description: 'Período em dias para análise'
+        required: false
+        default: '7'
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Collect Issue metrics
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SINCE_DAYS="${{ github.event.inputs.since-days || 7 }}"
+          SINCE=$(date -u -d "${SINCE_DAYS} days ago" +%Y-%m-%d)
+
+          echo "## 📊 Telemetry — bravo-code-sdd-g" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_Período: últimos ${SINCE_DAYS} dias (desde ${SINCE})_" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Issues por phase" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Phase | Open | Total |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|-------|" >> $GITHUB_STEP_SUMMARY
+          for phase in brainstorm define design build shipped; do
+            OPEN=$(gh issue list --repo "${{ github.repository }}" --label "phase:$phase" --state open --json number --jq '. | length' 2>/dev/null || echo 0)
+            TOTAL=$(gh issue list --repo "${{ github.repository }}" --label "phase:$phase" --state all --json number --jq '. | length' 2>/dev/null || echo 0)
+            echo "| \`phase:$phase\` | $OPEN | $TOTAL |" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Atividade no período" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          ISSUES_OPENED=$(gh issue list --repo "${{ github.repository }}" --state all --search "created:>=$SINCE" --json number --jq '. | length' 2>/dev/null || echo 0)
+          ISSUES_CLOSED=$(gh issue list --repo "${{ github.repository }}" --state closed --search "closed:>=$SINCE" --json number --jq '. | length' 2>/dev/null || echo 0)
+          PRS_MERGED=$(gh pr list --repo "${{ github.repository }}" --state merged --search "merged:>=$SINCE" --json number --jq '. | length' 2>/dev/null || echo 0)
+          PRS_OPEN=$(gh pr list --repo "${{ github.repository }}" --state open --json number --jq '. | length' 2>/dev/null || echo 0)
+
+          echo "| Métrica | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Issues abertas | $ISSUES_OPENED |" >> $GITHUB_STEP_SUMMARY
+          echo "| Issues fechadas | $ISSUES_CLOSED |" >> $GITHUB_STEP_SUMMARY
+          echo "| PRs mergeados | $PRS_MERGED |" >> $GITHUB_STEP_SUMMARY
+          echo "| PRs abertos | $PRS_OPEN |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Collect agent usage
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Agents mais usados (em DESIGN/BUILD_REPORT)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Conta @agent-name references em arquivos SDD
+          if [ -d ".claude/sdd" ]; then
+            grep -rohE '@[a-z][a-z0-9-]+' .claude/sdd/features/ .claude/sdd/reports/ .claude/sdd/archive/ 2>/dev/null \
+              | sort | uniq -c | sort -rn | head -10 \
+              | awk 'BEGIN{print "| Agent | Mentions |"; print "|-------|----------|"} {print "| `" $2 "` | " $1 " |"}' \
+              >> $GITHUB_STEP_SUMMARY || echo "_(nenhum agente referenciado ainda)_" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_(.claude/sdd/ ainda não tem features ativas)_" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: KB drift status
+        run: |
+          pip install pyyaml
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### KB Drift" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          python3 scripts/kb_drift.py --format markdown 2>/dev/null | tail -n +1 >> $GITHUB_STEP_SUMMARY || echo "_(kb_drift falhou)_" >> $GITHUB_STEP_SUMMARY
+
+      - name: Footer
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "_Coletado em $(date -u +%Y-%m-%dT%H:%M:%SZ) | trigger: ${{ github.event_name }}_" >> $GITHUB_STEP_SUMMARY

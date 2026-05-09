@@ -1,0 +1,98 @@
+name: Deploy MkDocs to Pages
+
+# =============================================================================
+# Build do MkDocs Material e deploy em GitHub Pages.
+# Roda em push para main que toca docs/, mkdocs.yml ou .claude/kb/
+# (o KB é referenciado pelas docs).
+# =============================================================================
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.claude/kb/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # necessário para git-revision-date plugin futuro
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install MkDocs Material
+        run: |
+          pip install \
+            mkdocs-material==9.5.* \
+            pymdown-extensions \
+            mkdocs-minify-plugin
+
+      - name: Sync KB to docs/kb
+        run: |
+          # Copia conteúdo dos domínios do KB para docs/kb/<domain>.md
+          # (concatena index.md + quick-reference.md de cada domínio)
+          for domain in gcp terraform terragrunt gemini openrouter pydantic langfuse crewai; do
+            if [ -d ".claude/kb/$domain" ]; then
+              {
+                echo "# $domain"
+                echo ""
+                echo "> Auto-sincronizado de \`.claude/kb/$domain/\` em $(date +%Y-%m-%d)"
+                echo ""
+                if [ -f ".claude/kb/$domain/index.md" ]; then
+                  echo "## Visão geral"
+                  echo ""
+                  cat ".claude/kb/$domain/index.md"
+                  echo ""
+                fi
+                if [ -f ".claude/kb/$domain/quick-reference.md" ]; then
+                  echo "## Quick Reference"
+                  echo ""
+                  cat ".claude/kb/$domain/quick-reference.md"
+                  echo ""
+                fi
+              } > "docs/kb/$domain.md"
+              echo "Synced: $domain"
+            fi
+          done
+
+      - name: Build site
+        run: mkdocs build --strict --verbose
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

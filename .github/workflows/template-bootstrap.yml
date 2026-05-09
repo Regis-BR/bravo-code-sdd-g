@@ -1,0 +1,145 @@
+name: Template Bootstrap
+
+# =============================================================================
+# Roda apenas quando alguém usa "Use this template" para criar um novo repo
+# a partir deste. Aplica automaticamente:
+# - As 47 labels do schema
+# - Issue de boas-vindas com checklist de setup
+# - Marca o repo como NÃO sendo template (para o novo dono decidir)
+# - Remove este próprio workflow após executar (one-shot)
+# =============================================================================
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  bootstrap:
+    # Só roda no FIRST commit do repo gerado a partir do template
+    # (heurística: 1 commit, repo é template-generated)
+    if: |
+      github.event.repository.is_template == false &&
+      github.event.repository.name != 'bravo-code-sdd-g'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Detect first run
+        id: first-run
+        run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          if [ "$COMMIT_COUNT" -gt 5 ]; then
+            echo "Repo has $COMMIT_COUNT commits — não é primeira execução, abortando bootstrap"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Primeira execução detectada (commits: $COMMIT_COUNT)"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply labels
+        if: steps.first-run.outputs.skip != 'true'
+        run: |
+          if [ -f scripts/apply-labels.sh ] && [ -f .github/labels.yml ]; then
+            chmod +x scripts/apply-labels.sh
+            REPO="${{ github.repository }}" bash scripts/apply-labels.sh || echo "Labels script teve issues; revisar manualmente"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create welcome issue
+        if: steps.first-run.outputs.skip != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const body = [
+              '# 👋 Bem-vindo ao seu novo projeto AgentSpec!',
+              '',
+              'Este repo foi gerado a partir do template [Regis-BR/bravo-code-sdd-g](https://github.com/Regis-BR/bravo-code-sdd-g).',
+              '',
+              '## Próximos passos',
+              '',
+              '### 1. Personalizar o repo',
+              '',
+              '- [ ] Atualizar `README.md` com nome e descrição do seu projeto',
+              '- [ ] Atualizar `LICENSE-NOTICE.md` ou substituir por LICENSE permissiva',
+              '- [ ] Atualizar `.github/CODEOWNERS` com seu handle',
+              '- [ ] Atualizar `.github/FUNDING.yml` se aplicável',
+              '',
+              '### 2. Configurações no GitHub UI',
+              '',
+              '- [ ] **Settings → General**: adicionar descrição e topics',
+              '- [ ] **Settings → Branches**: configurar branch protection em `main`',
+              '- [ ] **Settings → General → Features**: habilitar Discussions',
+              '- [ ] **Discussions → Categories**: criar 4 categorias canônicas:',
+              '    - 💡 Brainstorm (DISCUSSION)',
+              '    - ❓ Q&A (QUESTION/ANSWER)',
+              '    - 📢 Announcements (ANNOUNCEMENT)',
+              '    - 🛠️ Show & Tell (DISCUSSION)',
+              '',
+              '### 3. Criar Project v2',
+              '',
+              '```bash',
+              'bash scripts/setup-project.sh',
+              '```',
+              '',
+              '### 4. Começar primeira feature',
+              '',
+              '```bash',
+              'claude',
+              '> /brainstorm "minha primeira ideia"',
+              '# ou direto:',
+              '> /define "feature concreta"',
+              '```',
+              '',
+              '## Workflows ativos neste repo',
+              '',
+              '- `phase-sync-pr.yml`: sincroniza phase:build em PRs e Issues',
+              '- `auto-ship-label.yml`: marca como shipped ao mergear',
+              '- `pr-template-check.yml`: valida preenchimento do PR template',
+              '- `validate-sdd-artifacts.yml`: valida estrutura de DEFINE/DESIGN/BUILD_REPORT',
+              '- `lint-agents.yml`: valida frontmatter de agents',
+              '- `kb-drift-check.yml`: alerta semanal de KB stale',
+              '- `pages.yml`: deploy MkDocs em GitHub Pages',
+              '- `sync-labels.yml`: re-aplica labels quando schema muda',
+              '- `telemetry.yml`: métricas diárias',
+              '',
+              '## Documentação',
+              '',
+              '- [README](README.md) — visão geral',
+              '- [SETUP.md](docs/SETUP.md) — passos detalhados pós-fork',
+              '- [GITHUB_INTEGRATION.md](docs/GITHUB_INTEGRATION.md) — como tudo se conecta',
+              '- [ROADMAP.md](docs/ROADMAP.md) — evolução em 4 ondas',
+              '',
+              '---',
+              '',
+              '_Issue criada automaticamente pelo `template-bootstrap.yml`. Pode fechar quando completar os checkboxes acima._'
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title: '👋 Welcome — Configurações iniciais do seu novo repo',
+              body,
+              labels: ['documentation', 'priority:high']
+            });
+
+      - name: Disable template flag (in new repo) and remove this workflow
+        if: steps.first-run.outputs.skip != 'true'
+        run: |
+          # Remove este próprio workflow após primeira execução
+          # para não rodar de novo em pushes futuros
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/template-bootstrap.yml
+          git commit -m "chore: remove template-bootstrap.yml após primeira execução"
+          git push origin main || echo "Push falhou — ação manual necessária para remover este workflow"

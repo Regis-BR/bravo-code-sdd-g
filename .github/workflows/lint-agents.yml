@@ -1,0 +1,121 @@
+name: Lint Agents
+
+# =============================================================================
+# Roda em PRs que adicionam/modificam definições de agents.
+# Valida frontmatter (name, description, tools, model), modelos válidos,
+# tools válidas, nomes únicos, descriptions com tamanho razoável.
+# =============================================================================
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.claude/agents/**.md'
+      - 'scripts/lint_agents.py'
+      - '.github/workflows/lint-agents.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Detect changed agent files
+        id: changed
+        if: github.event_name == 'pull_request'
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          git diff --name-only --diff-filter=AM "$BASE" "$HEAD" \
+            | grep -E '^\.claude/agents/.+\.md$' \
+            | tr '\n' ' ' > /tmp/changed_agents.txt || true
+          FILES=$(cat /tmp/changed_agents.txt)
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          if [[ -z "$FILES" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Lint changed agents
+        if: github.event_name == 'pull_request' && steps.changed.outputs.skip != 'true'
+        id: lint_pr
+        run: |
+          set +e
+          # Roda contra TODOS para detectar duplicatas, mas reporta só os mudados
+          python3 scripts/lint_agents.py ${{ steps.changed.outputs.files }} --format markdown > /tmp/lint_report.md
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat /tmp/lint_report.md
+        continue-on-error: true
+
+      - name: Lint all agents (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        id: lint_all
+        run: |
+          set +e
+          python3 scripts/lint_agents.py --all --format markdown > /tmp/lint_report.md
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat /tmp/lint_report.md
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.changed.outputs.skip != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('/tmp/lint_report.md', 'utf8');
+            const exitCode = '${{ steps.lint_pr.outputs.exit_code }}';
+            const header = exitCode === '0'
+              ? '## ✅ Agent Lint — PASS'
+              : '## ❌ Agent Lint — FAIL';
+            const body = `${header}\n\n${report}\n\n_Linted by \`scripts/lint_agents.py\`._`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Agent Lint')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body
+              });
+            }
+
+      - name: Skip notice
+        if: github.event_name == 'pull_request' && steps.changed.outputs.skip == 'true'
+        run: echo "::notice::No agent files changed — linter skipped"
+
+      - name: Fail check on errors
+        if: steps.lint_pr.outputs.exit_code == '1' || steps.lint_all.outputs.exit_code == '1'
+        run: |
+          echo "::error::Agent lint found errors. See PR comment for details."
+          exit 1
