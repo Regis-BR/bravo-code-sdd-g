@@ -1,0 +1,116 @@
+name: Validate SDD Artifacts
+
+# =============================================================================
+# Roda em PRs que tocam .claude/sdd/features/ ou .claude/sdd/reports/.
+# Valida estrutura de DEFINE/DESIGN/BUILD_REPORT e calcula Clarity Score.
+# Resultado posta como comment + status check (necessário para required_status_checks).
+# =============================================================================
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.claude/sdd/features/**.md'
+      - '.claude/sdd/reports/**.md'
+      - 'scripts/validate_sdd.py'
+      - '.github/workflows/validate-sdd-artifacts.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Detect changed SDD artifacts
+        id: changed
+        run: |
+          # Compara com base branch para encontrar arquivos SDD modificados
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          git diff --name-only --diff-filter=AM "$BASE" "$HEAD" \
+            | grep -E '^\.claude/sdd/(features|reports)/.+\.md$' \
+            | tr '\n' ' ' > /tmp/changed_files.txt || true
+          FILES=$(cat /tmp/changed_files.txt)
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          if [[ -z "$FILES" ]]; then
+            echo "::notice::No SDD artifacts changed in this PR"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Changed: $FILES"
+          fi
+
+      - name: Run validator
+        if: steps.changed.outputs.skip != 'true'
+        id: validate
+        run: |
+          set +e
+          python3 scripts/validate_sdd.py ${{ steps.changed.outputs.files }} --format markdown > /tmp/report.md
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat /tmp/report.md
+        continue-on-error: true
+
+      - name: Comment on PR
+        if: steps.changed.outputs.skip != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report;
+            try {
+              report = fs.readFileSync('/tmp/report.md', 'utf8');
+            } catch (e) {
+              report = '## ⚠️ Validator failed to run\n\n' + e.message;
+            }
+
+            const exitCode = '${{ steps.validate.outputs.exit_code }}';
+            const header = exitCode === '0'
+              ? '## ✅ SDD Artifacts Validation — PASS'
+              : '## ❌ SDD Artifacts Validation — FAIL';
+            const body = `${header}\n\n${report}\n\n_Validated by \`scripts/validate_sdd.py\`._`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('SDD Artifacts Validation')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body
+              });
+            }
+
+      - name: Skip notice (no SDD changes)
+        if: steps.changed.outputs.skip == 'true'
+        run: echo "::notice::No SDD artifacts changed — validator skipped"
+
+      - name: Fail check if validation failed
+        if: steps.changed.outputs.skip != 'true' && steps.validate.outputs.exit_code != '0'
+        run: |
+          echo "::error::SDD validation failed. See PR comment for details."
+          exit 1

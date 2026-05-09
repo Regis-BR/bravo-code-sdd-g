@@ -1,0 +1,76 @@
+name: KB Drift Check
+
+# =============================================================================
+# Roda semanalmente (segunda 09:00 UTC) e em manual dispatch.
+# Detecta domínios do KB com mcp_validated >90 dias, arquivos excedendo
+# limites de tamanho, ou confidence scores baixos.
+# Abre Issue agregadora por domínio (1 Issue por domain, não 1 por concept).
+# =============================================================================
+
+on:
+  schedule:
+    # Toda segunda às 09:00 UTC = 06:00 BRT (após início da semana)
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      threshold-days:
+        description: 'Dias para considerar mcp_validated stale'
+        required: false
+        default: '90'
+      dry-run:
+        description: 'Apenas reportar (não abrir Issues)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['true', 'false']
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  detect-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run drift check (report only)
+        id: report
+        run: |
+          set +e
+          python3 scripts/kb_drift.py \
+            --format markdown \
+            --threshold-days "${{ github.event.inputs.threshold-days || 90 }}" \
+            > /tmp/drift_report.md
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat /tmp/drift_report.md
+        continue-on-error: true
+
+      - name: Generate summary
+        run: |
+          {
+            echo "# KB Drift Check Report"
+            echo ""
+            echo "_Threshold: ${{ github.event.inputs.threshold-days || 90 }} days | Triggered: ${{ github.event_name }}_"
+            echo ""
+            cat /tmp/drift_report.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create issues for drifts
+        if: github.event.inputs.dry-run != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/kb_drift.py \
+            --create-issues \
+            --repo "${{ github.repository }}" \
+            --threshold-days "${{ github.event.inputs.threshold-days || 90 }}" || true

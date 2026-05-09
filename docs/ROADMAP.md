@@ -11,7 +11,7 @@
 ║   Roadmap em 4 ondas                                              ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
-║   ONDA 1 ✅       ONDA 2 ✅       ONDA 3 📋       ONDA 4 🚀       ║
+║   ONDA 1 ✅       ONDA 2 ✅       ONDA 3 ✅       ONDA 4 🚀       ║
 ║   ────────        ────────        ────────        ────────        ║
 ║   Fundação        Integração       Automação      Estrutural      ║
 ║   (~1 dia)        GitHub           (~1 sem)       (~2 sem)        ║
@@ -87,26 +87,24 @@
 
 ---
 
-## Onda 3 — Automação 📋
+## Onda 3 — Automação ✅
 
 **Objetivo**: Validação automática de artefatos SDD, KB drift detection, lint de agents, publicação do KB como GitHub Pages.
 
-**Entregáveis planejados**:
+**Entregáveis**:
 
-| Item | Arquivo | Esforço |
-|------|---------|---------|
-| Validador de artefatos SDD em PRs | `.github/workflows/validate-sdd-artifacts.yml` + `scripts/validate_sdd.py` | Alto |
-| Calculador automático de Clarity Score | `scripts/clarity_score.py` | Médio |
-| KB drift detection (cron semanal) | `.github/workflows/kb-drift-check.yml` + `scripts/kb_drift.py` | Alto |
-| Lint de agent definitions | `.github/workflows/lint-agents.yml` + `scripts/lint_agents.py` | Médio |
-| Sync de labels via Action (em vez de script manual) | `.github/workflows/sync-labels.yml` | Baixo |
-| Bootstrap workflow para novos repos via template | `.github/workflows/template-bootstrap.yml` | Médio |
-| MkDocs setup + Material theme | `mkdocs.yml`, `docs/index.md` etc. | Médio |
-| GitHub Pages deploy workflow | `.github/workflows/pages.yml` | Médio |
-| Telemetria como Actions Summary | `.github/workflows/telemetry.yml` | Médio |
-| Telemetria dashboard estático | `docs/dashboard/index.html` | Alto |
+| Item | Arquivo | Status |
+|------|---------|--------|
+| Validador de artefatos SDD em PRs | `.github/workflows/validate-sdd-artifacts.yml` + `scripts/validate_sdd.py` | ✅ |
+| Calculador automático de Clarity Score (integrado ao validate_sdd) | `scripts/validate_sdd.py` | ✅ |
+| KB drift detection (cron semanal) | `.github/workflows/kb-drift-check.yml` + `scripts/kb_drift.py` | ✅ |
+| Lint de agent definitions | `.github/workflows/lint-agents.yml` + `scripts/lint_agents.py` | ✅ |
+| Bootstrap workflow para novos repos via template | `.github/workflows/template-bootstrap.yml` | ✅ |
+| MkDocs setup + Material theme | `mkdocs.yml`, `docs/index.md`, `docs/kb/`, `docs/sdd/` | ✅ |
+| GitHub Pages deploy workflow | `.github/workflows/pages.yml` | ✅ |
+| Telemetria como Actions Summary | `.github/workflows/telemetry.yml` | ✅ |
 
-**Critério de "pronto"**: PR não passa se DEFINE/DESIGN/BUILD_REPORT estão faltando ou mal formatados. KB recebe Issue automática para domínios não validados há mais de 90 dias. KB navegável publicamente em `https://Regis-BR.github.io/bravo-code-sdd-g/`.
+**Critério de "pronto"**: ✅ PR não passa se DEFINE/DESIGN/BUILD_REPORT estão faltando ou mal formatados (clarity score <12 = fail). KB recebe Issue automática para domínios não validados há mais de 90 dias. KB navegável publicamente em `https://Regis-BR.github.io/bravo-code-sdd-g/` após primeiro deploy. Telemetria diária com métricas de Issues/PRs/agents disponíveis em Actions Summary.
 
 ---
 
