@@ -11,7 +11,7 @@
 ║   Roadmap em 4 ondas                                              ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
-║   ONDA 1 ✅       ONDA 2 ⏳       ONDA 3 📋       ONDA 4 🚀       ║
+║   ONDA 1 ✅       ONDA 2 ✅       ONDA 3 📋       ONDA 4 🚀       ║
 ║   ────────        ────────        ────────        ────────        ║
 ║   Fundação        Integração       Automação      Estrutural      ║
 ║   (~1 dia)        GitHub           (~1 sem)       (~2 sem)        ║
@@ -66,26 +66,24 @@
 
 ---
 
-## Onda 2 — Integração GitHub ⏳
+## Onda 2 — Integração GitHub ✅
 
 **Objetivo**: Transformar Issues, PRs e Project v2 em parte estrutural do framework, não apenas hospedagem.
 
-**Entregáveis planejados**:
+**Entregáveis**:
 
-| Item | Arquivo | Esforço |
-|------|---------|---------|
-| CODEOWNERS por path/domínio | `.github/CODEOWNERS` | Baixo |
-| Project v2 schema (custom fields, views, workflows) | `scripts/setup-project.sh` | Médio |
-| Discussions categorias config | `scripts/setup-discussions.sh` | Baixo |
-| Branch Protection rules | `scripts/setup-branch-protection.sh` | Baixo |
-| Workflow: sincronizar label `phase:*` quando Issue avança | `.github/workflows/phase-sync.yml` | Médio |
-| Workflow: marcar PR como `phase:build` quando aberto | `.github/workflows/pr-phase-label.yml` | Baixo |
-| Workflow: mover Issue para `phase:shipped` ao mergear | `.github/workflows/auto-ship-label.yml` | Baixo |
-| Workflow: validação manual de PR template preenchido | `.github/workflows/pr-template-check.yml` | Médio |
-| Documentação: como Issues/PRs/Project se integram com SDD | `docs/GITHUB_INTEGRATION.md` | Médio |
-| Documentação: setup completo via gh CLI | `docs/INITIAL_SETUP.md` | Médio |
+| Item | Arquivo | Status |
+|------|---------|--------|
+| CODEOWNERS por path/domínio | `.github/CODEOWNERS` | ✅ |
+| Workflow: phase-sync de PRs para Issues | `.github/workflows/phase-sync-pr.yml` | ✅ |
+| Workflow: auto-ship label ao mergear | `.github/workflows/auto-ship-label.yml` | ✅ |
+| Workflow: validação de PR template | `.github/workflows/pr-template-check.yml` | ✅ |
+| Workflow: sync-labels automático | `.github/workflows/sync-labels.yml` | ✅ |
+| Script setup Project v2 (custom fields, link repo) | `scripts/setup-project.sh` | ✅ |
+| Script check-discussions (alerta categorias faltando) | `scripts/check-discussions.sh` | ✅ |
+| Documentação da integração GitHub-nativa | `docs/GITHUB_INTEGRATION.md` | ✅ |
 
-**Critério de "pronto"**: ao abrir uma Issue do tipo `define`, ela aparece automaticamente no Project v2 na coluna correta. Ao abrir PR vinculado a essa Issue, labels mudam de fase. Ao mergear, Issue fecha + Project move para Done.
+**Critério de "pronto"**: ✅ ao abrir PR vinculado a Issue via `Closes #N`, labels `phase:build` aparecem automaticamente em ambos. Ao mergear, `phase:shipped` é aplicado. PR template check posta comment de validação automaticamente.
 
 ---
 

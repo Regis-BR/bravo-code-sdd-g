@@ -1,0 +1,79 @@
+name: Phase Sync (PR → Issue)
+
+# =============================================================================
+# Quando um PR é aberto/atualizado, propaga `phase:build` para o PR e para
+# a(s) Issue(s) referenciada(s) via "Closes #N", garantindo single phase label.
+# =============================================================================
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, edited]
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  sync-build-phase:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Sync phase labels for PR and linked issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const PHASE_LABELS = [
+              'phase:brainstorm',
+              'phase:define',
+              'phase:design',
+              'phase:build',
+              'phase:shipped'
+            ];
+            const TARGET = 'phase:build';
+
+            const setPhase = async (issueNumber, target) => {
+              // Remove outras phases (idempotente)
+              for (const label of PHASE_LABELS.filter(l => l !== target)) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: label
+                  });
+                } catch (e) {
+                  // 404 = label não estava aplicada, ok
+                  if (e.status !== 404) throw e;
+                }
+              }
+              // Adiciona target
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: [target]
+              });
+              console.log(`✅ Issue #${issueNumber} → ${target}`);
+            };
+
+            // 1. Aplica phase:build no próprio PR
+            await setPhase(context.payload.pull_request.number, TARGET);
+
+            // 2. Extrai "Closes #N" do body e propaga para Issue(s) linkada(s)
+            const body = context.payload.pull_request.body || '';
+            const matches = [...body.matchAll(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi)];
+            const issueNumbers = [...new Set(matches.map(m => parseInt(m[1])))];
+
+            if (issueNumbers.length === 0) {
+              console.log('⚠️  No "Closes #N" found in PR body — Issue not synced.');
+              return;
+            }
+
+            for (const num of issueNumbers) {
+              try {
+                await setPhase(num, TARGET);
+              } catch (e) {
+                console.log(`⚠️  Failed to sync Issue #${num}: ${e.message}`);
+              }
+            }

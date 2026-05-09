@@ -1,0 +1,65 @@
+name: Sync Labels
+
+# =============================================================================
+# Quando .github/labels.yml é modificado em main (ou disparado manualmente),
+# sincroniza as labels do repo com o schema. Substitui o uso manual do
+# scripts/apply-labels.sh.
+# =============================================================================
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/labels.yml'
+      - '.github/workflows/sync-labels.yml'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Apenas mostrar mudanças sem aplicar'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      skip-delete:
+        description: 'Manter labels existentes que não estão em labels.yml'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run github-labeler
+        uses: crazy-max/ghaction-github-labeler@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          yaml-file: .github/labels.yml
+          skip-delete: ${{ github.event.inputs.skip-delete || 'true' }}
+          dry-run: ${{ github.event.inputs.dry-run || 'false' }}
+          exclude: |
+            help wanted
+            good first issue
+
+      - name: Summary
+        run: |
+          echo "## 🏷️ Label Sync" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Schema: \`.github/labels.yml\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Dry-run: \`${{ github.event.inputs.dry-run || 'false' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Skip delete: \`${{ github.event.inputs.skip-delete || 'true' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Trigger: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Labels: https://github.com/${{ github.repository }}/labels" >> $GITHUB_STEP_SUMMARY

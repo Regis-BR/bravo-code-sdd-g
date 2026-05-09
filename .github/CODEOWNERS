@@ -1,0 +1,94 @@
+# =============================================================================
+#  CODEOWNERS — bravo-code-sdd-g
+# =============================================================================
+#  Define ownership por path. Quando branch protection tem
+#  `require_code_owner_reviews: true`, mudanças nestes paths exigem aprovação
+#  do(s) owner(s) listado(s).
+#
+#  Atualmente o repo é mantido por um único maintainer (@Regis-BR), então
+#  todas as linhas apontam para ele. Quando o time crescer, basta adicionar
+#  handles após @Regis-BR (separados por espaço).
+#
+#  Sintaxe: <pattern> <owner1> <owner2> ...
+#  Última linha que faz match vence.
+# =============================================================================
+
+# ---------- Default: tudo pertence ao mantenedor ----------
+*                                       @Regis-BR
+
+# ---------- Framework core ----------
+# Mudanças em agent definitions, comandos e workflow SDD são críticas
+.claude/agents/                         @Regis-BR
+.claude/commands/                       @Regis-BR
+.claude/sdd/                            @Regis-BR
+.claude/sdd/architecture/               @Regis-BR
+.claude/sdd/templates/                  @Regis-BR
+
+# ---------- Knowledge Base ----------
+# _index.yaml é o registry: requer cuidado especial
+.claude/kb/_index.yaml                  @Regis-BR
+.claude/kb/_templates/                  @Regis-BR
+
+# Por domínio — quando ganhar specialists, adicionar aqui:
+# .claude/kb/gcp/                       @Regis-BR @gcp-specialist-handle
+# .claude/kb/gemini/                    @Regis-BR @ai-ml-specialist-handle
+.claude/kb/gcp/                         @Regis-BR
+.claude/kb/terraform/                   @Regis-BR
+.claude/kb/terragrunt/                  @Regis-BR
+.claude/kb/gemini/                      @Regis-BR
+.claude/kb/openrouter/                  @Regis-BR
+.claude/kb/pydantic/                    @Regis-BR
+.claude/kb/langfuse/                    @Regis-BR
+.claude/kb/crewai/                      @Regis-BR
+
+# ---------- Dev Loop ----------
+.claude/dev/templates/                  @Regis-BR
+.claude/dev/examples/                   @Regis-BR
+
+# ---------- GitHub infra (todo PR mexendo aqui requer review extra) ----------
+.github/                                @Regis-BR
+.github/workflows/                      @Regis-BR
+.github/CODEOWNERS                      @Regis-BR
+.github/ISSUE_TEMPLATE/                 @Regis-BR
+.github/PULL_REQUEST_TEMPLATE.md        @Regis-BR
+.github/labels.yml                      @Regis-BR
+
+# ---------- Devcontainer (Onda 4) ----------
+.devcontainer/                          @Regis-BR
+
+# ---------- MCP Server (Onda 4) ----------
+kb-mcp/                                 @Regis-BR
+kb-mcp/src/                             @Regis-BR
+kb-mcp/package.json                     @Regis-BR
+
+# ---------- Documentation ----------
+docs/                                   @Regis-BR
+*.md                                    @Regis-BR
+
+# Documentos legais — mudanças exigem revisão consciente
+LICENSE-NOTICE.md                       @Regis-BR
+SECURITY.md                             @Regis-BR
+CODE_OF_CONDUCT.md                      @Regis-BR
+
+# ---------- Scripts e automação ----------
+scripts/                                @Regis-BR
+*.sh                                    @Regis-BR
+
+# =============================================================================
+#  Como adicionar colaborador no futuro:
+#
+#  Suponha @colaborador-X especialista em GCP. Edite acima:
+#
+#    .claude/kb/gcp/                    @Regis-BR @colaborador-X
+#
+#  E habilite enforcement em branch protection:
+#
+#    gh api repos/Regis-BR/bravo-code-sdd-g/branches/main/protection \
+#      --method PUT \
+#      --input - <<< '{
+#        "required_pull_request_reviews": {
+#          "required_approving_review_count": 1,
+#          "require_code_owner_reviews": true
+#        }
+#      }'
+# =============================================================================
