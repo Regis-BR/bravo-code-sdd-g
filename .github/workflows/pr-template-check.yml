@@ -1,0 +1,124 @@
+name: PR Template Check
+
+# =============================================================================
+# Valida que campos críticos do PR template foram preenchidos:
+# - Closes #N (vínculo com Issue da feature)
+# - Pelo menos um tipo de mudança marcado
+# - Para PRs com phase:build: artefatos SDD linkados
+#
+# Resultado é postado como comment no PR e como status check (necessário para
+# Branch Protection com required_status_checks na Onda 3).
+# =============================================================================
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, ready_for_review]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+  checks: write
+
+jobs:
+  check-template:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR description
+        id: validate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            const issues = [];
+            const warnings = [];
+
+            // 1. Closes #N obrigatório (exceto para PRs de tipo infra/docs/chore)
+            const isInfraType = labels.some(l =>
+              ['component:gh-action', 'documentation', 'chore', 'refactor'].includes(l)
+            );
+            if (!/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#\d+/i.test(body) && !isInfraType) {
+              issues.push('❌ PR deve incluir `Closes #N` referenciando a Issue da feature');
+            }
+
+            // 2. Tipo de mudança marcado (- [x] em alguma linha de checkbox)
+            const checkedTypes = body.match(/-\s*\[x\]\s+(?:🚀|🔄|📚|🤖|🔧|📝|🐛|⚠️)/g) || [];
+            if (checkedTypes.length === 0) {
+              issues.push('❌ Pelo menos um tipo de mudança deve estar marcado (- [x] ...)');
+            }
+
+            // 3. Para phase:build, artefatos SDD obrigatórios
+            if (labels.includes('phase:build')) {
+              if (!/\.claude\/sdd\/features\/DEFINE_/.test(body)) {
+                issues.push('❌ PR de phase:build deve linkar artefato DEFINE');
+              }
+              if (!/\.claude\/sdd\/features\/DESIGN_/.test(body)) {
+                issues.push('❌ PR de phase:build deve linkar artefato DESIGN');
+              }
+              if (!/\.claude\/sdd\/reports\/BUILD_REPORT_/.test(body)) {
+                warnings.push('⚠️ Recomendado: linkar BUILD_REPORT (será obrigatório quando Onda 3 mergear)');
+              }
+            }
+
+            // 4. Sem secrets óbvios no body (heurística simples)
+            const secretPatterns = [
+              /sk_[a-zA-Z0-9]{20,}/,                    // OpenAI/Stripe
+              /AKIA[0-9A-Z]{16}/,                       // AWS access key
+              /ghp_[a-zA-Z0-9]{36,}/,                   // GitHub PAT
+              /xoxb-[0-9]+-[0-9]+-[a-zA-Z0-9]+/,        // Slack bot token
+            ];
+            for (const pattern of secretPatterns) {
+              if (pattern.test(body)) {
+                issues.push('🚨 Possível secret detectado no PR body — REMOVA imediatamente');
+                break;
+              }
+            }
+
+            // Decide outcome
+            const passed = issues.length === 0;
+            const reportLines = [
+              `## ${passed ? '✅' : '❌'} PR Template Check`,
+              '',
+              passed
+                ? 'Todos os campos obrigatórios foram preenchidos.'
+                : '**Campos obrigatórios faltando:**',
+              ...issues.map(i => `- ${i}`),
+              warnings.length > 0 ? '\n**Avisos:**' : '',
+              ...warnings.map(w => `- ${w}`),
+              '',
+              passed
+                ? '_Aprovado em ' + new Date().toISOString().split('T')[0] + '._'
+                : 'Edite a descrição do PR e o check rodará novamente automaticamente.'
+            ];
+            const report = reportLines.filter(l => l !== '').join('\n');
+
+            // Comment ou update
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('PR Template Check')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: report
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: report
+              });
+            }
+
+            // Falha o check se houver issues
+            if (!passed) {
+              core.setFailed(issues.join(' | '));
+            }

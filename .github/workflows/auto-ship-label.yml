@@ -1,0 +1,96 @@
+name: Auto-Ship on Merge
+
+# =============================================================================
+# Quando um PR é mergeado em main, a(s) Issue(s) referenciada(s) via
+# "Closes #N" é(são) movida(s) para `phase:shipped`. Issue já fechou
+# automaticamente pelo GitHub via Closes; este workflow só atualiza a label.
+# =============================================================================
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  issues: write
+  pull-requests: read
+  contents: read
+
+jobs:
+  ship:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark linked issues as phase:shipped
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const PHASE_LABELS = [
+              'phase:brainstorm',
+              'phase:define',
+              'phase:design',
+              'phase:build',
+              'phase:shipped'
+            ];
+            const TARGET = 'phase:shipped';
+
+            const body = context.payload.pull_request.body || '';
+            const matches = [...body.matchAll(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi)];
+            const issueNumbers = [...new Set(matches.map(m => parseInt(m[1])))];
+
+            if (issueNumbers.length === 0) {
+              console.log('ℹ️  PR não referencia Issues via "Closes #N" — nada a fazer.');
+              return;
+            }
+
+            for (const issueNumber of issueNumbers) {
+              try {
+                // Remove outras phases
+                for (const label of PHASE_LABELS.filter(l => l !== TARGET)) {
+                  try {
+                    await github.rest.issues.removeLabel({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      name: label
+                    });
+                  } catch (e) {
+                    if (e.status !== 404) throw e;
+                  }
+                }
+                // Adiciona shipped
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: [TARGET]
+                });
+                console.log(`🚀 Issue #${issueNumber} → ${TARGET}`);
+              } catch (e) {
+                console.log(`⚠️  Issue #${issueNumber}: ${e.message}`);
+              }
+            }
+
+            // Marca também o próprio PR como shipped (substitui phase:build)
+            try {
+              for (const label of PHASE_LABELS.filter(l => l !== TARGET)) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.payload.pull_request.number,
+                    name: label
+                  });
+                } catch (e) {
+                  if (e.status !== 404) throw e;
+                }
+              }
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: [TARGET]
+              });
+              console.log(`🚀 PR #${context.payload.pull_request.number} → ${TARGET}`);
+            } catch (e) {
+              console.log(`⚠️  PR label update failed: ${e.message}`);
+            }
