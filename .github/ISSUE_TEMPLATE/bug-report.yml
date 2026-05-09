@@ -1,0 +1,94 @@
+name: 🐛 Bug Report — Framework
+description: Reporte um bug no framework AgentSpec, agentes, comandos, KB ou workflows.
+title: "[bug] "
+labels:
+  - "bug"
+  - "needs-triage"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug no framework
+        Para bugs em **uma feature em desenvolvimento** (não no framework), abra um Issue tipo Iterate em vez disso.
+
+        Para vulnerabilidades de **segurança**, NÃO abra Issue pública — siga `SECURITY.md`.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Componente afetado
+      multiple: true
+      options:
+        - "Agent definition (.claude/agents/)"
+        - "Command (.claude/commands/)"
+        - "SDD workflow (.claude/sdd/)"
+        - "Dev Loop (.claude/dev/)"
+        - "Knowledge Base (.claude/kb/)"
+        - "GitHub Action / workflow"
+        - "Issue Form / PR template"
+        - "MCP server (kb-mcp/)"
+        - "Documentation (README, docs/)"
+        - "Outro"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição do bug
+      description: O que está acontecendo? O que você esperava que acontecesse?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. Rodar `/define ...`
+        2. Observar que o agente entra em loop
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Ambiente
+      description: Versão do Claude Code, OS, modelo em uso, etc.
+      placeholder: |
+        - Claude Code: v2.x
+        - OS: WSL2 Ubuntu 22.04
+        - Modelo: claude-opus-4-7
+        - Branch do framework: main @ <commit-sha>
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / output
+      description: Cole logs relevantes (redija dados sensíveis).
+      render: shell
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidade
+      options:
+        - "🔴 Critical (framework inutilizável)"
+        - "🟠 High (workflow quebrado, workaround difícil)"
+        - "🟡 Medium (bug com workaround viável)"
+        - "🟢 Low (cosmético, edge case)"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: Procurei Issues existentes e este bug não foi reportado
+          required: true
+        - label: Removi qualquer dado sensível dos logs/snippets acima
+          required: true

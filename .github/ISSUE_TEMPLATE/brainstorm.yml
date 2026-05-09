@@ -1,0 +1,113 @@
+name: 🌱 Brainstorm — Phase 0
+description: Explorar uma ideia vaga antes de definir requisitos formais. Use quando o problema ainda não está claro.
+title: "[brainstorm] "
+labels:
+  - "phase:brainstorm"
+  - "needs-triage"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Phase 0 — Brainstorm
+        Esta fase é **opcional**. Use apenas se a ideia ainda está vaga ou se você quer explorar 2-3 abordagens antes de comprometer requisitos.
+
+        Se você já sabe **exatamente** o que precisa, pule esta fase e abra um Issue do tipo **Define** diretamente.
+
+  - type: input
+    id: feature-name
+    attributes:
+      label: Nome curto da feature (snake_case)
+      description: "Será usado em arquivos `BRAINSTORM_{FEATURE}.md`. Ex: `invoice_extraction`, `nfe_parser`, `tax_calculator`."
+      placeholder: my_feature
+    validations:
+      required: true
+
+  - type: textarea
+    id: raw-idea
+    attributes:
+      label: Ideia bruta
+      description: Descreva o problema ou ideia em linguagem natural, sem se preocupar com estrutura. O `brainstorm-agent` vai conduzir Q&A para refinar.
+      placeholder: |
+        Tenho uma planilha de NF-e que recebo dos clientes e queria automatizar a extração dos dados pra carregar no banco...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto / Restrições conhecidas
+      description: Tecnologias preferidas, constraints de tempo, integrações obrigatórias, etc. Pode deixar em branco.
+      placeholder: |
+        - Stack: Python + GCP
+        - Volume: ~500 NF-e/mês
+        - Deve integrar com Cloud Storage existente
+    validations:
+      required: false
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Complexidade percebida
+      description: Estimativa inicial — não precisa ser exata.
+      options:
+        - "🟢 Pequena (1-2 dias, 1-3 arquivos)"
+        - "🟡 Média (3-7 dias, 5-15 arquivos, 1-2 sistemas)"
+        - "🔴 Grande (>1 semana, múltiplos sistemas, infra)"
+        - "❓ Não sei estimar"
+      default: 3
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kb-domains
+    attributes:
+      label: Domínios KB potencialmente relevantes
+      description: Selecione os domínios do Knowledge Base que parecem aplicáveis (multi-select).
+      multiple: true
+      options:
+        - gcp
+        - terraform
+        - terragrunt
+        - gemini
+        - openrouter
+        - pydantic
+        - langfuse
+        - crewai
+        - other / none
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      options:
+        - "priority:critical"
+        - "priority:high"
+        - "priority:normal"
+        - "priority:low"
+      default: 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: success-vague
+    attributes:
+      label: Como você saberia que isso "ficou bom"?
+      description: Mesmo vago, descreva o estado final desejado. Vai virar Success Criteria na fase Define.
+      placeholder: |
+        - Cliente manda NF-e por e-mail e os dados aparecem no banco em <5min
+        - Erro de extração <2%
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: next-steps
+    attributes:
+      label: Próximos passos esperados
+      description: Marque o que você espera que aconteça após este Issue.
+      options:
+        - label: O `brainstorm-agent` (Opus) vai conduzir Q&A nos comments deste Issue
+          required: true
+        - label: Após brainstorm, este Issue vira tipo `define` automaticamente (label muda)
+          required: false
+        - label: Estou ciente que esta fase é opcional e pode ser pulada
+          required: true

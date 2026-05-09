@@ -1,0 +1,116 @@
+name: 📚 KB Update — Knowledge Base
+description: Sugerir adição, atualização ou correção em um domínio do KB.
+title: "[kb] "
+labels:
+  - "kb-update"
+  - "needs-triage"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Knowledge Base Update
+        Use este template para propor mudanças nos `.claude/kb/<domain>/`. Inclui adição de concepts, patterns, specs ou atualização de quick-reference.
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domínio KB
+      options:
+        - gcp
+        - terraform
+        - terragrunt
+        - gemini
+        - openrouter
+        - pydantic
+        - langfuse
+        - crewai
+        - "Novo domínio (proposta)"
+    validations:
+      required: true
+
+  - type: input
+    id: new-domain-name
+    attributes:
+      label: Se "Novo domínio", qual o nome?
+      description: snake_case. Ex `nestjs`, `pgvector`, `n8n`, `efd_reinf`.
+      placeholder: domain_name
+    validations:
+      required: false
+
+  - type: dropdown
+    id: change-type
+    attributes:
+      label: Tipo de mudança
+      options:
+        - "➕ Adicionar novo concept"
+        - "➕ Adicionar novo pattern"
+        - "➕ Adicionar novo spec (YAML schema)"
+        - "✏️ Atualizar concept existente (nova versão de API, etc.)"
+        - "✏️ Atualizar pattern existente"
+        - "✏️ Atualizar quick-reference"
+        - "🐛 Corrigir erro técnico em arquivo existente"
+        - "📦 Criar domínio inteiro (novo)"
+    validations:
+      required: true
+
+  - type: input
+    id: target-file
+    attributes:
+      label: Arquivo alvo (path)
+      description: Path relativo ao repo. Vazio se for criação de novo arquivo.
+      placeholder: ".claude/kb/gcp/concepts/cloud-run.md"
+    validations:
+      required: false
+
+  - type: textarea
+    id: justification
+    attributes:
+      label: Justificativa
+      description: Por que esta mudança é necessária? Qual problema resolve?
+      placeholder: |
+        - Cloud Run lançou suporte a `--no-cpu-throttling` que muda o pattern de pricing
+        - Pattern atual em `cloud-run-scaling.md` está desatualizado desde 2025-Q3
+    validations:
+      required: true
+
+  - type: textarea
+    id: source-references
+    attributes:
+      label: Fontes / referências
+      description: Links para docs oficiais, blog posts, RFC, mudanças de versão. Mínimo 1.
+      placeholder: |
+        - https://cloud.google.com/run/docs/...
+        - Release notes: https://...
+    validations:
+      required: true
+
+  - type: textarea
+    id: confidence
+    attributes:
+      label: Confidence score proposto (0.0 - 1.0)
+      description: "Quão confiante você está na nova informação? Considere: validação MCP, testes, fontes primárias."
+      placeholder: "0.95 — verificado via MCP em 2026-05-09 + 3 fontes primárias"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: limits
+    attributes:
+      label: Limites de tamanho (`_index.yaml`)
+      description: Confirmação de aderência aos limites do `_index.yaml`.
+      options:
+        - label: "concept ≤150 linhas (se aplicável)"
+        - label: "pattern ≤200 linhas (se aplicável)"
+        - label: "quick-reference ≤100 linhas (se aplicável)"
+
+  - type: checkboxes
+    id: validation
+    attributes:
+      label: Validação
+      options:
+        - label: Verifiquei `_index.yaml` para evitar duplicação
+          required: true
+        - label: Mudança será testada (concept aplicado, pattern executado) antes de merge
+          required: true
+        - label: Atualizarei `mcp_validated` para a data de hoje após verificação
+          required: true
