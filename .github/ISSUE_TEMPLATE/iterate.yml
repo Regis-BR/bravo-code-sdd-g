@@ -1,0 +1,78 @@
+name: 🔄 Iterate — Cross-phase
+description: Iterar em uma feature já definida/desenhada/construída. Pode disparar cascata em fases downstream.
+title: "[iterate] "
+labels:
+  - "iterate"
+  - "needs-triage"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Iterate — Cross-phase
+        Use quando uma feature já passou por DEFINE/DESIGN/BUILD e precisa ser ajustada. O `iterate-agent` propaga mudanças com **cascata** para fases dependentes.
+
+  - type: input
+    id: original-feature
+    attributes:
+      label: Feature original (nome ou Issue#)
+      description: Qual feature você quer iterar? Ex `invoice_extraction` ou `#42`.
+      placeholder: feature_name OR #N
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase-to-update
+    attributes:
+      label: Fase que precisa ser atualizada
+      options:
+        - "DEFINE — requisitos mudaram"
+        - "DESIGN — arquitetura precisa ajuste"
+        - "BUILD — código precisa refator"
+        - "Múltiplas fases (cascata completa)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: change-summary
+    attributes:
+      label: Resumo da mudança
+      description: O que mudou? Por quê?
+      placeholder: |
+        Cliente novo (Suzano Industrial) tem NF-e com layout diferente — precisamos suportar campo `cInf` que não estava no escopo original.
+    validations:
+      required: true
+
+  - type: textarea
+    id: cascade-impact
+    attributes:
+      label: Impacto em cascata (sua estimativa)
+      description: Quais fases downstream provavelmente serão afetadas?
+      placeholder: |
+        - DESIGN: precisa novo handler para variant "industrial"
+        - BUILD: novo módulo `extractors/industrial.py`
+        - KB: atualizar `gemini/patterns/invoice-extraction.md`
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      options:
+        - "priority:critical"
+        - "priority:high"
+        - "priority:normal"
+        - "priority:low"
+      default: 2
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: cascade-confirm
+    attributes:
+      label: Confirmações
+      options:
+        - label: Estou ciente que o `iterate-agent` pode propagar mudanças automaticamente para fases dependentes
+          required: true
+        - label: Caso a cascata afete BUILD já mergeado, novo PR será aberto
+          required: true

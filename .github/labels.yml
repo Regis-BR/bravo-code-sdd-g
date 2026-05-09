@@ -1,0 +1,203 @@
+# ============================================================================
+# Labels Schema — bravo-code-sdd-g
+# ============================================================================
+# Aplicar via: gh-action-github-labeler ou script local com `gh label create`.
+# Veja .github/workflows/sync-labels.yml (Onda 3) para automação.
+# ============================================================================
+
+# ---------- Phase labels (5 fases SDD) ----------
+- name: "phase:brainstorm"
+  color: "C5DEF5"  # azul claro
+  description: "Phase 0 — exploração inicial de ideia"
+
+- name: "phase:define"
+  color: "BFD4F2"  # azul médio
+  description: "Phase 1 — requisitos formalizados (clarity score ≥12)"
+
+- name: "phase:design"
+  color: "5319E7"  # roxo
+  description: "Phase 2 — arquitetura + agent matching"
+
+- name: "phase:build"
+  color: "0E8A16"  # verde
+  description: "Phase 3 — implementação em andamento"
+
+- name: "phase:shipped"
+  color: "1D76DB"  # azul escuro
+  description: "Phase 4 — feature shipped + arquivada"
+
+# ---------- Cross-phase ----------
+- name: "iterate"
+  color: "FBCA04"  # amarelo
+  description: "Iteração em feature já definida/desenhada/construída"
+
+# ---------- Status ----------
+- name: "needs-triage"
+  color: "D93F0B"  # vermelho-laranja
+  description: "Aguardando triagem inicial"
+
+- name: "blocked"
+  color: "B60205"  # vermelho
+  description: "Bloqueado por dependência externa ou outra Issue"
+
+- name: "in-progress"
+  color: "FBCA04"
+  description: "Trabalho ativo"
+
+- name: "needs-clarification"
+  color: "D4C5F9"  # lavanda
+  description: "Agente pediu informação adicional do reporter"
+
+- name: "ready-for-review"
+  color: "0E8A16"
+  description: "Pronto para review (PR aberto, validations ok)"
+
+# ---------- Priority ----------
+- name: "priority:critical"
+  color: "B60205"
+  description: "Crítico — atender imediatamente"
+
+- name: "priority:high"
+  color: "D93F0B"
+  description: "Alta — atender no sprint atual"
+
+- name: "priority:normal"
+  color: "FBCA04"
+  description: "Normal — priorização padrão"
+
+- name: "priority:low"
+  color: "0E8A16"
+  description: "Baixa — backlog"
+
+# ---------- Type ----------
+- name: "bug"
+  color: "D73A4A"
+  description: "Bug no framework"
+
+- name: "enhancement"
+  color: "A2EEEF"
+  description: "Melhoria de feature existente"
+
+- name: "documentation"
+  color: "0075CA"
+  description: "Mudança em README, CONTRIBUTING, MkDocs"
+
+- name: "refactor"
+  color: "C2E0C6"
+  description: "Refatoração sem mudança de comportamento"
+
+- name: "test"
+  color: "BFDADC"
+  description: "Mudança em testes"
+
+- name: "chore"
+  color: "EDEDED"
+  description: "Tarefa de manutenção (deps, config, etc.)"
+
+# ---------- KB Domains ----------
+- name: "kb-domain:gcp"
+  color: "4285F4"  # GCP blue
+  description: "Afeta KB de GCP"
+
+- name: "kb-domain:terraform"
+  color: "844FBA"  # Terraform purple
+  description: "Afeta KB de Terraform"
+
+- name: "kb-domain:terragrunt"
+  color: "844FBA"
+  description: "Afeta KB de Terragrunt"
+
+- name: "kb-domain:gemini"
+  color: "8B7CF8"
+  description: "Afeta KB de Gemini"
+
+- name: "kb-domain:openrouter"
+  color: "FF6B6B"
+  description: "Afeta KB de OpenRouter"
+
+- name: "kb-domain:pydantic"
+  color: "E92063"  # Pydantic pink
+  description: "Afeta KB de Pydantic"
+
+- name: "kb-domain:langfuse"
+  color: "FF9D4D"
+  description: "Afeta KB de Langfuse"
+
+- name: "kb-domain:crewai"
+  color: "FF7A33"
+  description: "Afeta KB de CrewAI"
+
+- name: "kb-update"
+  color: "0075CA"
+  description: "Atualização proposta no Knowledge Base"
+
+# ---------- Component ----------
+- name: "component:agent"
+  color: "5319E7"
+  description: "Mudança em definição de agent"
+
+- name: "component:command"
+  color: "5319E7"
+  description: "Mudança em slash command"
+
+- name: "component:workflow"
+  color: "5319E7"
+  description: "Mudança em SDD workflow (.claude/sdd/)"
+
+- name: "component:dev-loop"
+  color: "5319E7"
+  description: "Mudança em Dev Loop (.claude/dev/)"
+
+- name: "component:mcp-server"
+  color: "5319E7"
+  description: "Mudança no kb-mcp/ (Onda 4)"
+
+- name: "component:gh-action"
+  color: "0366D6"  # GitHub blue
+  description: "Mudança em GitHub Action / workflow"
+
+- name: "component:devcontainer"
+  color: "0366D6"
+  description: "Mudança em .devcontainer/"
+
+# ---------- Severity (para bugs) ----------
+- name: "severity:critical"
+  color: "B60205"
+  description: "Framework inutilizável"
+
+- name: "severity:high"
+  color: "D93F0B"
+  description: "Workflow quebrado, workaround difícil"
+
+- name: "severity:medium"
+  color: "FBCA04"
+  description: "Bug com workaround viável"
+
+- name: "severity:low"
+  color: "0E8A16"
+  description: "Cosmético, edge case"
+
+# ---------- Special ----------
+- name: "good-first-issue"
+  color: "7057FF"
+  description: "Bom para quem está aprendendo o framework"
+
+- name: "help-wanted"
+  color: "008672"
+  description: "Mantenedor aceita PR de quem quiser ajudar"
+
+- name: "wontfix"
+  color: "FFFFFF"
+  description: "Não será corrigido (out of scope)"
+
+- name: "duplicate"
+  color: "CFD3D7"
+  description: "Duplicado de outra Issue"
+
+- name: "invalid"
+  color: "E4E669"
+  description: "Issue inválida ou não reproduzível"
+
+- name: "security"
+  color: "B60205"
+  description: "Relacionado a segurança (privately reported preferido)"

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/Regis-BR/bravo-code-sdd-g/discussions
+    about: Para perguntas, ideias preliminares, ou conversas exploratórias antes de virar feature.
+  - name: 📚 Documentação (KB)
+    url: https://github.com/Regis-BR/bravo-code-sdd-g/tree/main/.claude/kb
+    about: Consulte o Knowledge Base antes de abrir Issue de dúvida técnica.
+  - name: 🔒 Segurança
+    url: https://github.com/Regis-BR/bravo-code-sdd-g/security/policy
+    about: Reporte vulnerabilidades de forma privada conforme SECURITY.md (NÃO abra Issue pública).

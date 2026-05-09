@@ -1,0 +1,152 @@
+name: 📋 Define — Phase 1
+description: Definir requisitos validáveis para uma feature. Os campos obrigatórios materializam o "Clarity Score ≥12" do framework.
+title: "[define] "
+labels:
+  - "phase:define"
+  - "needs-triage"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Phase 1 — Define
+        Cada campo abaixo contribui para o **Clarity Score**. O mínimo para avançar para Design é **12 pontos** (cada campo obrigatório vale 2-3 pontos).
+
+        Se sua ideia ainda está vaga, considere abrir um Issue de **Brainstorm** primeiro.
+
+  - type: input
+    id: feature-name
+    attributes:
+      label: Nome da feature (snake_case)
+      description: "Usado em `DEFINE_{FEATURE}.md`. Ex: `invoice_extraction`, `nfe_parser_v2`."
+      placeholder: my_feature
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: |
+        **O quê + Por quê** em 2-4 frases. Foque no problema real do usuário, não na solução.
+        ✅ Bom: "Clientes recebem NF-e por email e fazem entrada manual no ERP, levando 15min/nota e gerando 5% de erros de digitação."
+        ❌ Ruim: "Precisamos de uma API que use Gemini pra extrair NF-e."
+      placeholder: |
+        [Quem] enfrenta [problema] quando [contexto], resultando em [impacto mensurável].
+        Atualmente isso é resolvido por [estado atual], mas tem limitações de [X, Y, Z].
+    validations:
+      required: true
+
+  - type: textarea
+    id: target-users
+    attributes:
+      label: Target Users
+      description: Quem usa? Liste personas ou roles específicos. Evite "todos os usuários".
+      placeholder: |
+        - Contadores do escritório (5 pessoas) — operam o sistema diariamente
+        - Clientes finais (~150 PJ) — submetem NF-e via email
+        - Auditor fiscal (eventual) — valida amostras
+    validations:
+      required: true
+
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success Criteria
+      description: |
+        Critérios **mensuráveis** que definem "ficou bom". Use métricas, não adjetivos.
+        ✅ "Tempo de extração <30s para 95% das NF-e"
+        ❌ "Sistema deve ser rápido"
+      placeholder: |
+        - [ ] Extração automática de 95%+ dos campos obrigatórios da NF-e (chave, CNPJ emitente, valor total, itens)
+        - [ ] Latência p95 <30s
+        - [ ] Custo <R$0,05/NF-e processada
+        - [ ] Taxa de erro de extração <2%
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-tests
+    attributes:
+      label: Acceptance Tests
+      description: |
+        Testes Given/When/Then que provariam que a feature está pronta. Pelo menos 3.
+      placeholder: |
+        1. Given uma NF-e válida em PDF, When recebida via email, Then dados são extraídos e gravados em <30s
+        2. Given uma NF-e com OCR ruim, When processada, Then sistema marca como "needs-review" e notifica operador
+        3. Given uma NF-e duplicada (mesma chave), When recebida, Then sistema rejeita com motivo claro
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of Scope
+      description: |
+        Liste **explicitamente** o que NÃO faz parte desta feature. Crítico para evitar scope creep.
+      placeholder: |
+        - Extração de notas de outros tipos (NFS-e, CT-e) — feature separada
+        - Integração com ERPs além do Contabia
+        - UI de revisão manual (vem em fase posterior)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kb-domains
+    attributes:
+      label: Domínios KB que devem informar o Design
+      description: Multi-select. Os patterns destes domínios serão consultados na fase Design.
+      multiple: true
+      options:
+        - gcp
+        - terraform
+        - terragrunt
+        - gemini
+        - openrouter
+        - pydantic
+        - langfuse
+        - crewai
+        - other / none
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      options:
+        - "priority:critical"
+        - "priority:high"
+        - "priority:normal"
+        - "priority:low"
+      default: 2
+    validations:
+      required: true
+
+  - type: input
+    id: brainstorm-link
+    attributes:
+      label: Link para Brainstorm Issue (se houver)
+      description: Se esta feature passou pela fase 0, cole o link aqui (ex `#42`).
+      placeholder: "#"
+    validations:
+      required: false
+
+  - type: textarea
+    id: clarity-notes
+    attributes:
+      label: Notas adicionais para o `define-agent`
+      description: Qualquer contexto que ajude a refinar o DEFINE final (links, decisões pré-existentes, etc.)
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmações
+      options:
+        - label: Li o `LICENSE-NOTICE.md` e entendi a situação jurídica do framework
+          required: true
+        - label: Os campos acima representam o melhor da minha compreensão atual (clarity score ≥12)
+          required: true
+        - label: Estou ciente que o `define-agent` pode pedir clarificações via comments
+          required: true
