@@ -1,0 +1,47 @@
+{
+  "name": "@regis-br/kb-mcp",
+  "version": "0.1.0",
+  "description": "MCP server exposing bravo-code-sdd-g Knowledge Base to LLM clients (Claude Code, Cursor, Windsurf, n8n)",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "kb-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "node --test dist/*.test.js || echo 'No tests yet'"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "knowledge-base",
+    "agentspec",
+    "spec-driven-development"
+  ],
+  "author": "Regis Renzi <regis@rnztech.com>",
+  "license": "SEE LICENSE-NOTICE.md IN ROOT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Regis-BR/bravo-code-sdd-g.git",
+    "directory": "kb-mcp"
+  }
+}

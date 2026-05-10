@@ -11,7 +11,7 @@
 ║   Roadmap em 4 ondas                                              ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
-║   ONDA 1 ✅       ONDA 2 ✅       ONDA 3 ✅       ONDA 4 🚀       ║
+║   ONDA 1 ✅   ONDA 2 ✅   ONDA 3 ✅   ONDA 4a ✅   4b 🚀   4c 🚀  ║
 ║   ────────        ────────        ────────        ────────        ║
 ║   Fundação        Integração       Automação      Estrutural      ║
 ║   (~1 dia)        GitHub           (~1 sem)       (~2 sem)        ║
@@ -108,25 +108,44 @@
 
 ---
 
-## Onda 4 — Estrutural 🚀
+## Onda 4 — Estrutural (dividida em sub-ondas)
 
 **Objetivo**: Diferenciação real — KB como MCP server, sincronização bidirecional Issue↔.md, releases automatizadas, devcontainer.
 
-**Entregáveis planejados**:
+A Onda 4 foi dividida em sub-ondas independentes para gerenciar complexidade (especialmente o subprojeto TypeScript do MCP server).
+
+### Onda 4a — KB MCP Server ✅
+
+| Item | Arquivo | Status |
+|------|---------|--------|
+| TypeScript MCP server (ESM, strict) | `kb-mcp/src/{index,server,kb-loader,tools}.ts` | ✅ |
+| 6 tools: list_domains, get_domain, search, read_concept, read_pattern, quick_reference | `kb-mcp/src/tools.ts` | ✅ |
+| Cache YAML/file com mtime invalidation | `kb-mcp/src/kb-loader.ts` | ✅ |
+| Path sandbox (rejeita ../) | `kb-mcp/src/kb-loader.ts` | ✅ |
+| Search ranking (header×3 + body×1 + name match +5) | `kb-mcp/src/kb-loader.ts` | ✅ |
+| Documentação de uso (Claude Code/Cursor/n8n) | `docs/MCP_SERVER.md` | ✅ |
+
+**Critério de "pronto"**: ✅ `npm run build` em `kb-mcp/` produz `dist/` válido. Smoke test `tools/list` retorna 6 tools. `kb_search "cloud run scaling"` retorna `gcp/pattern/cloud-run-scaling` no top com score >50. `kb_read_concept gcp/cloud-run` retorna conteúdo do arquivo.
+
+### Onda 4b — Workflow automation (planejada)
 
 | Item | Arquivo | Esforço |
 |------|---------|---------|
-| KB MCP Server (TypeScript) | `kb-mcp/src/index.ts`, `package.json`, etc. | Muito alto |
-| Tools MCP: list-domains, get-concept, get-pattern, search-kb | `kb-mcp/src/tools/*.ts` | Alto |
-| Documentação MCP server | `kb-mcp/README.md` | Médio |
-| Bidirectional Issue ↔ DEFINE.md sync | `.github/workflows/issue-md-sync.yml` + `scripts/sync_issue_md.py` | Muito alto |
-| Iterate cascade detection | `.github/workflows/iterate-cascade.yml` + `scripts/cascade_detect.py` | Alto |
-| Auto-release on /ship | `.github/workflows/auto-release.yml` | Médio |
-| Release notes generator | `scripts/generate_release_notes.py` | Médio |
-| Devcontainer setup completo | `.devcontainer/devcontainer.json`, `Dockerfile`, scripts | Alto |
-| Codespaces secrets management docs | `docs/CODESPACES.md` | Baixo |
+| Bidirectional Issue ↔ DEFINE.md sync | `.github/workflows/issue-to-define.yml` + `scripts/issue_to_define.py` | Alto |
+| Iterate cascade detection | `.github/workflows/iterate-cascade.yml` | Médio |
+| Auto-release on `/ship` | `.github/workflows/release-on-ship.yml` | Médio |
 
-**Critério de "pronto"**: rodar `claude` em Codespaces fresh start funciona em <30s. Editar Issue body atualiza DEFINE_*.md no próximo push. Mudança em DEFINE dispara comment no PR alertando sobre cascata. Ship gera Release no GitHub com changelog.
+**Critério de "pronto"**: comment `/materialize-define` em Issue cria DEFINE_*.md branch + PR. Mudança em DEFINE dispara comment no PR alertando sobre cascata em DESIGN/BUILD. Issue closed com `phase:shipped` cria GitHub Release com semver auto.
+
+### Onda 4c — Codespaces & DevEx (planejada)
+
+| Item | Arquivo | Esforço |
+|------|---------|---------|
+| Devcontainer completo | `.devcontainer/devcontainer.json` + post-create.sh + post-start.sh | Médio |
+| Aliases shell (mkserve, validate-sdd, lint-agents, kb-mcp-test) | `.devcontainer/post-create.sh` | Baixo |
+| KB drift status no startup | `.devcontainer/post-start.sh` | Baixo |
+
+**Critério de "pronto"**: rodar `claude` em Codespaces fresh start funciona em <30s. Aliases disponíveis no shell. KB drift status mostrado como banner inicial.
 
 ---
 
@@ -137,7 +156,9 @@
 | 1 | Imediato | Fork criado |
 | 2 | Após Onda 1 mergeada e ações manuais feitas | Labels aplicadas, repo marcado como template |
 | 3 | Após Onda 2 mergeada | CODEOWNERS configurado, Project v2 setup |
-| 4 | Após Onda 3 mergeada | Validações automáticas estáveis, KB Pages no ar |
+| 4a | Após Onda 3 mergeada | Validações automáticas estáveis, KB Pages no ar |
+| 4b | Após 4a mergeada | MCP server validado em uso real |
+| 4c | Após 4b mergeada (ou paralelo) | Workflow automation estável |
 
 [Inference] Aplicar tudo de uma vez funcionaria mas geraria PR gigante difícil de revisar. As 4 ondas permitem aplicar incrementalmente, validar cada uma em uso real, e ajustar antes da próxima.
 
