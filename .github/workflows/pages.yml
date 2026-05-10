@@ -39,18 +39,19 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+          cache-dependency-path: 'docs/requirements.txt'
 
       - name: Install MkDocs Material
-        run: |
-          pip install \
-            mkdocs-material==9.5.* \
-            pymdown-extensions \
-            mkdocs-minify-plugin
+        run: pip install -r docs/requirements.txt
 
       - name: Sync KB to docs/kb
         run: |
           # Copia conteúdo dos domínios do KB para docs/kb/<domain>.md
           # (concatena index.md + quick-reference.md de cada domínio)
+          # Reescreve links relativos:
+          #   - (concepts/X.md), (patterns/X.md), (specs/X.yaml) -> URL absoluta no GitHub
+          #   - (quick-reference.md) -> anchor #quick-reference da própria página
+          REPO_URL="https://github.com/${{ github.repository }}/blob/main/.claude/kb"
           for domain in gcp terraform terragrunt gemini openrouter pydantic langfuse crewai; do
             if [ -d ".claude/kb/$domain" ]; then
               {
@@ -65,12 +66,15 @@ jobs:
                   echo ""
                 fi
                 if [ -f ".claude/kb/$domain/quick-reference.md" ]; then
-                  echo "## Quick Reference"
+                  echo "## Quick Reference {#quick-reference}"
                   echo ""
                   cat ".claude/kb/$domain/quick-reference.md"
                   echo ""
                 fi
-              } > "docs/kb/$domain.md"
+              } | sed -E \
+                  -e "s#\(((concepts|patterns|specs)/[a-z0-9-]+\.(md|yaml))\)#($REPO_URL/$domain/\1)#g" \
+                  -e 's~\(quick-reference\.md\)~(#quick-reference)~g' \
+                > "docs/kb/$domain.md"
               echo "Synced: $domain"
             fi
           done

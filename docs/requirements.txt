@@ -1,0 +1,8 @@
+# Dependências do MkDocs site (consumidas por .github/workflows/pages.yml)
+# Para servir localmente:
+#   pip install -r docs/requirements.txt
+#   mkdocs serve
+
+mkdocs-material==9.5.49
+pymdown-extensions>=10.0
+mkdocs-minify-plugin>=0.7
